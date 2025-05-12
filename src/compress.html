@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compress PDFs</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #000; color: #fff; }
+        header { text-align: center; padding: 20px; background: linear-gradient(90deg, #000, #111); border-bottom: 2px solid #fff; }
+        .logo { font-size: 2.5rem; color: #fff; text-shadow: none; transition: text-shadow 0.3s ease-in-out; }
+        .logo:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        .tagline { font-size: 1.2rem; color: #ccc; }
+        .card { margin: 20px auto; padding: 20px; max-width: 800px; background-color: #111; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); }
+        #drag-drop-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #drag-drop-area.drag-over {
+            border-color: #ccc;
+            background-color: #222;
+        }
+        #drag-drop-area p {
+            color: #ccc;
+            font-size: 1rem;
+            text-shadow: none;
+            margin: 0;
+        }
+        .convert-btn, .download-btn, .reset-btn, .back-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .convert-btn:hover, .download-btn:hover, .reset-btn:hover, .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #fff;
+        }
+        .progress-message { color: #ccc; margin-top: 10px; font-size: 1rem; }
+        footer { text-align: center; padding: 20px; background: #111; border-top: 2px solid #fff; color: #ccc; }
+        footer ul { text-align: left; max-width: 800px; margin: 20px auto; padding-left: 20px; }
+        #file-list { margin-top: 10px; color: #ccc; font-size: 1rem; }
+        #file-info { color: #ccc; font-size: 1rem; margin-top: 5px; }
+        #download-container {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        #loading-spinner {
+            display: none;
+            border: 4px solid #ccc;
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        h2, .convert-btn, .download-btn, .reset-btn, .back-btn {
+            text-shadow: none;
+            box-shadow: none;
+            border-color: #fff;
+        }
+        @media (max-width: 600px) {
+            .card { margin: 10px; padding: 15px; }
+            .convert-btn, .download-btn, .reset-btn, .back-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            #download-container { flex-direction: column; align-items: center; }
+            #file-list p { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">Compress PDFs</h1>
+            <p class="tagline">Reduce the size of your PDF files.</p>
+        </div>
+    </header>
+    <main>
+        <section class="card">
+            <h2>Upload PDF to Compress</h2>
+            <div id="drag-drop-area">
+                <p>Drag & Drop your PDF file here or click to upload</p>
+                <input type="file" id="pdf-upload" accept=".pdf">
+            </div>
+            <div id="file-list"></div>
+            <p id="file-info"></p>
+            <button class="convert-btn" id="compress-btn">Compress</button>
+            <button class="reset-btn" id="reset-btn">Reset</button>
+            <div id="loading-spinner"></div>
+            <p class="progress-message" id="progress-message"></p>
+            <div id="download-container"></div>
+            <button class="back-btn" onclick="goBack()">Back</button>
+        </section>
+    </main>
+    <footer>
+        <h2>📖 How to Use</h2>
+        <ul>
+            <li>Upload a PDF by dragging it into the drag-and-drop area or clicking to select a file.</li>
+            <li>Wait for the PDF to load; the page count and file size will be displayed below the file name.</li>
+            <li>Click "Compress" to reduce the PDF’s file size.</li>
+            <li>Download the compressed PDF using the "Download Compressed PDF" button, and compare the original and compressed file sizes.</li>
+            <li>Use the "Reset" button to clear the current PDF and start over.</li>
+            <li>Click "Back" to return to the main menu.</li>
+        </ul>
+        <p>© 2025 PDF Forge. All rights reserved.</p>
+    </footer>
+    <script>
+        const fileInput = document.getElementById('pdf-upload');
+        const fileList = document.getElementById('file-list');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const compressBtn = document.getElementById('compress-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressMessage = document.getElementById('progress-message');
+        const downloadContainer = document.getElementById('download-container');
+        const fileInfoDisplay = document.getElementById('file-info');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        let selectedFile = null;
+        let originalSize = 0;
+
+        // Format file size in KB or MB
+        function formatFileSize(bytes) {
+            if (bytes < 1024 * 1024) {
+                return `${(bytes / 1024).toFixed(2)} KB`;
+            }
+            return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+        }
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0 && fileInput.files[0].type === 'application/pdf') {
+                selectedFile = fileInput.files[0];
+                validateAndLoadFile(selectedFile);
+            } else {
+                alert('Please select a valid PDF file.');
+            }
+        });
+
+        // Drag-and-drop functionality
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('drag-over');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            if (event.dataTransfer.files.length > 0 && event.dataTransfer.files[0].type === 'application/pdf') {
+                selectedFile = event.dataTransfer.files[0];
+                validateAndLoadFile(selectedFile);
+            } else {
+                alert('Please drop a valid PDF file.');
+            }
+        });
+
+        // Validate and load PDF
+        async function validateAndLoadFile(file) {
+            try {
+                progressMessage.textContent = 'Loading PDF...';
+                loadingSpinner.style.display = 'block';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await window.PDFLib.PDFDocument.load(arrayBuffer);
+                const pageCount = pdfDoc.getPageCount();
+                if (pageCount === 0) {
+                    throw new Error('PDF has no pages.');
+                }
+                originalSize = arrayBuffer.byteLength;
+                updateFileList();
+                fileInfoDisplay.textContent = `Pages: ${pageCount} | Size: ${formatFileSize(originalSize)}`;
+                progressMessage.textContent = 'PDF loaded. Click "Compress Now" to proceed.';
+                loadingSpinner.style.display = 'none';
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert(`An error occurred while loading the PDF: ${error.message}. Please try another file.`);
+                progressMessage.textContent = '';
+                loadingSpinner.style.display = 'none';
+                selectedFile = null;
+                originalSize = 0;
+                updateFileList();
+                fileInfoDisplay.textContent = '';
+            }
+        }
+
+        // Update file list display
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFile) {
+                const listItem = document.createElement('p');
+                listItem.textContent = `1. ${selectedFile.name}`;
+                fileList.appendChild(listItem);
+            }
+        }
+
+        // Compress PDF
+        compressBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                alert('Please upload a PDF file to compress.');
+                return;
+            }
+
+            progressMessage.textContent = 'Compressing PDF...';
+            loadingSpinner.style.display = 'block';
+            downloadContainer.innerHTML = '';
+
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const pdfDoc = await window.PDFLib.PDFDocument.load(arrayBuffer);
+
+                // Basic optimization: Remove duplicate fonts and resources
+                const fontKeys = pdfDoc.context.enumerateIndirectObjects()
+                    .filter(([_, obj]) => obj instanceof window.PDFLib.PDFFont)
+                    .map(([ref]) => ref);
+                const usedFonts = new Set();
+                pdfDoc.getPages().forEach(page => {
+                    const fonts = page.node.get('Resources')?.get('Font')?.asDict();
+                    if (fonts) {
+                        for (const fontRef of fonts.keys()) {
+                            usedFonts.add(fontRef.toString());
+                        }
+                    }
+                });
+                fontKeys.forEach(ref => {
+                    if (!usedFonts.has(ref.toString())) {
+                        pdfDoc.context.delete(ref);
+                    }
+                });
+
+                // Save with minimal compression options (pdf-lib limitation)
+                const compressedPdfBytes = await pdfDoc.save({
+                    useObjectStreams: true, // Enable object streams for better compression
+                    addDefaultPage: false,
+                    objectsPerStream: 100 // Increase objects per stream
+                });
+
+                const compressedSize = compressedPdfBytes.length;
+                const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const downloadBtn = document.createElement('a');
+                downloadBtn.href = url;
+                downloadBtn.download = 'compressed.pdf';
+                downloadBtn.textContent = 'Download Compressed PDF';
+                downloadBtn.className = 'download-btn';
+                downloadContainer.appendChild(downloadBtn);
+
+                const sizeReduction = ((originalSize - compressedSize) / originalSize * 100).toFixed(2);
+                progressMessage.textContent = `Compression complete! Original size: ${formatFileSize(originalSize)} | Compressed size: ${formatFileSize(compressedSize)} | Reduction: ${sizeReduction}%`;
+                loadingSpinner.style.display = 'none';
+            } catch (error) {
+                console.error('Error compressing PDF:', error);
+                alert(`An error occurred while compressing the PDF: ${error.message}. Please ensure the file is a valid PDF and try again.`);
+                progressMessage.textContent = '';
+                loadingSpinner.style.display = 'none';
+                downloadContainer.innerHTML = '';
+            }
+        });
+
+        // Reset File Functionality
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            originalSize = 0;
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            fileInfoDisplay.textContent = '';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your PDF file here or click to upload';
+            downloadContainer.innerHTML = '';
+            progressMessage.textContent = 'File has been reset. You can now choose a new file.';
+            loadingSpinner.style.display = 'none';
+        });
+
+        // Back to Main Page
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "pdf-converter-website",
+  "version": "1.0.0",
+  "description": "A free PDF converter website for merging, compressing, and editing PDFs.",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "live-server public",
+    "build": "echo 'Build process not defined yet.'"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1"
+  },
+  "keywords": [
+    "pdf",
+    "converter",
+    "merge",
+    "compress",
+    "edit"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

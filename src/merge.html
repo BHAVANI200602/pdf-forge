@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge PDFs</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #000; color: #fff; }
+        header { text-align: center; padding: 20px; background: linear-gradient(90deg, #000, #111); border-bottom: 2px solid #fff; }
+        .logo { font-size: 2.5rem; color: #fff; text-shadow: none; transition: text-shadow 0.3s ease-in-out; }
+        .logo:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        .tagline { font-size: 1.2rem; color: #ccc; }
+        .card { margin: 20px auto; padding: 20px; max-width: 800px; background-color: #111; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); }
+        #drag-drop-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #drag-drop-area.drag-over {
+            border-color: #ccc;
+            background-color: #222;
+        }
+        #drag-drop-area p {
+            color: #ccc;
+            font-size: 1rem;
+            text-shadow: none;
+            margin: 0;
+        }
+        .convert-btn, .download-btn, .reset-btn, .back-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .convert-btn:hover, .download-btn:hover, .reset-btn:hover, .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #fff;
+        }
+        .progress-message { color: #ccc; margin-top: 10px; font-size: 1rem; }
+        footer { text-align: center; padding: 20px; background: #111; border-top: 2px solid #fff; color: #ccc; }
+        footer ul { text-align: left; max-width: 800px; margin: 20px auto; padding-left: 20px; }
+        #file-list { margin-top: 10px; color: #ccc; font-size: 1rem; }
+        #page-count { color: #ccc; font-size: 1rem; margin-top: 5px; }
+        #download-container {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        #loading-spinner {
+            display: none;
+            border: 4px solid #ccc;
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        h2, .convert-btn, .download-btn, .reset-btn, .back-btn {
+            text-shadow: none;
+            box-shadow: none;
+            border-color: #fff;
+        }
+        @media (max-width: 600px) {
+            .card { margin: 10px; padding: 15px; }
+            .convert-btn, .download-btn, .reset-btn, .back-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            #download-container { flex-direction: column; align-items: center; }
+            #file-list p { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">Merge PDFs</h1>
+            <p class="tagline">Combine multiple PDF files into one.</p>
+        </div>
+    </header>
+    <main>
+        <section class="card">
+            <h2>Upload PDFs to Merge</h2>
+            <div id="drag-drop-area">
+                <p>Drag & Drop your PDF files here or click to upload</p>
+                <input type="file" id="pdf-upload" accept=".pdf" multiple>
+            </div>
+            <div id="file-list"></div>
+            <p id="page-count"></p>
+            <button class="convert-btn" id="merge-btn">Merge</button>
+            <button class="reset-btn" id="reset-btn">Reset</button>
+            <div id="loading-spinner"></div>
+            <p class="progress-message" id="progress-message"></p>
+            <div id="download-container"></div>
+            <button class="back-btn" onclick="goBack()">Back</button>
+        </section>
+    </main>
+    <footer>
+        <h2>📖 How to Use</h2>
+        <ul>
+            <li>Upload multiple PDFs by dragging them into the drag-and-drop area or clicking to select files.</li>
+            <li>Wait for the PDFs to load; the total page count across all files will be displayed below the file list.</li>
+            <li>Click "Merge" to combine all uploaded PDFs into a single PDF in the order listed.</li>
+            <li>Download the merged PDF using the "Download Merged PDF" button.</li>
+            <li>Use the "Reset" button to clear all uploaded PDFs and start over.</li>
+            <li>Click "Back" to return to the main menu.</li>
+        </ul>
+        <p>© 2025 PDF Forge. All rights reserved.</p>
+    </footer>
+    <script>
+        const fileInput = document.getElementById('pdf-upload');
+        const fileList = document.getElementById('file-list');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const mergeBtn = document.getElementById('merge-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressMessage = document.getElementById('progress-message');
+        const downloadContainer = document.getElementById('download-container');
+        const pageCountDisplay = document.getElementById('page-count');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        let selectedFiles = [];
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            const newFiles = Array.from(fileInput.files).filter(file => file.type === 'application/pdf');
+            if (newFiles.length < fileInput.files.length) {
+                alert('Only PDF files are allowed. Non-PDF files were ignored.');
+            }
+            addFiles(newFiles);
+            fileInput.value = ''; // Clear input to allow re-uploading
+        });
+
+        // Drag-and-drop functionality
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('drag-over');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            const newFiles = Array.from(event.dataTransfer.files).filter(file => file.type === 'application/pdf');
+            if (newFiles.length < event.dataTransfer.files.length) {
+                alert('Only PDF files are allowed. Non-PDF files were ignored.');
+            }
+            addFiles(newFiles);
+        });
+
+        // Add files and validate
+        async function addFiles(files) {
+            const uniqueFiles = files.filter(newFile => 
+                !selectedFiles.some(existingFile => 
+                    existingFile.name === newFile.name && existingFile.size === newFile.size
+                )
+            );
+            if (uniqueFiles.length < files.length) {
+                progressMessage.textContent = 'Duplicate files were ignored.';
+            }
+            selectedFiles = [...selectedFiles, ...uniqueFiles];
+            await updateFileList();
+        }
+
+        // Update file list and page count
+        async function updateFileList() {
+            fileList.innerHTML = '';
+            let totalPages = 0;
+
+            for (const [index, file] of selectedFiles.entries()) {
+                const listItem = document.createElement('p');
+                listItem.textContent = `${index + 1}. ${file.name}`;
+                fileList.appendChild(listItem);
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await window.PDFLib.PDFDocument.load(arrayBuffer);
+                    totalPages += pdfDoc.getPageCount();
+                } catch (error) {
+                    console.error(`Error loading ${file.name}:`, error);
+                    listItem.textContent += ' (Invalid or corrupt PDF)';
+                }
+            }
+
+            pageCountDisplay.textContent = selectedFiles.length > 0 
+                ? `Total pages across ${selectedFiles.length} files: ${totalPages}`
+                : '';
+        }
+
+        // Merge PDFs
+        mergeBtn.addEventListener('click', async () => {
+            if (selectedFiles.length < 2) {
+                alert('Please upload at least two PDF files to merge.');
+                return;
+            }
+
+            progressMessage.textContent = 'Merging PDFs...';
+            loadingSpinner.style.display = 'block';
+            downloadContainer.innerHTML = '';
+
+            try {
+                const mergedPdf = await window.PDFLib.PDFDocument.create();
+                let fileCount = 0;
+
+                for (const file of selectedFiles) {
+                    fileCount++;
+                    progressMessage.textContent = `Merging PDF ${fileCount} of ${selectedFiles.length}...`;
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.PDFLib.PDFDocument.load(arrayBuffer);
+                    if (pdf.getPageCount() === 0) {
+                        throw new Error(`File "${file.name}" has no pages.`);
+                    }
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+
+                const mergedPdfBytes = await mergedPdf.save();
+                const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const downloadBtn = document.createElement('a');
+                downloadBtn.href = url;
+                downloadBtn.download = 'merged.pdf';
+                downloadBtn.textContent = 'Download Merged PDF';
+                downloadBtn.className = 'download-btn';
+                downloadContainer.appendChild(downloadBtn);
+
+                progressMessage.textContent = 'Merge complete! Download your file below.';
+                loadingSpinner.style.display = 'none';
+            } catch (error) {
+                console.error('Error merging PDFs:', error);
+                alert(`An error occurred while merging PDFs: ${error.message}. Please ensure all files are valid PDFs and try again.`);
+                progressMessage.textContent = '';
+                loadingSpinner.style.display = 'none';
+            }
+        });
+
+        // Reset Files Functionality
+        resetBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            pageCountDisplay.textContent = '';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your PDF files here or click to upload';
+            downloadContainer.innerHTML = '';
+            progressMessage.textContent = 'Files have been reset. You can now choose new files.';
+            loadingSpinner.style.display = 'none';
+        });
+
+        // Back to Main Page
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

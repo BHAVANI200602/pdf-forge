@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Forge - Convert Images & Text to PDF</title>
+    <meta name="description" content="PDF Forge: Convert images and text to PDF effortlessly. Merge, compress, split, and manage PDFs with our free, client-side tools.">
+    <meta name="keywords" content="PDF converter, images to PDF, text to PDF, merge PDFs, compress PDFs, split PDFs, PDF tools, free PDF editor">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="PDF Forge">
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="PDF Forge - Free PDF Conversion Tools">
+    <meta property="og:description" content="Convert images and text to PDF, merge, compress, or split PDFs with PDF Forge's client-side tools. Fast, free, and easy to use.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pdfforge.vercel.app">
+    <meta property="og:image" content="https://pdfforge.vercel.app/public/favicon.ico">
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PDF Forge - Free PDF Conversion Tools">
+    <meta name="twitter:description" content="Convert images and text to PDF, merge, compress, or split PDFs with PDF Forge's client-side tools. Fast, free, and easy to use.">
+    <meta name="twitter:image" content="https://pdfforge.vercel.app/public/favicon.ico">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
+    <!--
+    Note: For SEO, create sitemap.xml and robots.txt in the root directory.
+    Example robots.txt:
+    User-agent: *
+    Allow: /
+    Sitemap: https://pdfforge.vercel.app/sitemap.xml
+    -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(90deg, #000, #111);
+            border-bottom: 2px solid #fff;
+        }
+        .logo, .tagline {
+            transition: text-shadow 0.3s ease-in-out;
+        }
+        .logo {
+            font-size: 2.5rem;
+            color: #fff;
+        }
+        .tagline {
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+        .logo:hover, .tagline:hover {
+            text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+        }
+        .card {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+            background-color: #111;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        #drag-drop-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+        }
+        #drag-drop-area p {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        #drag-drop-area.drag-over {
+            border-color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        #file-upload {
+            margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #fff;
+            background-color: #111;
+            color: #fff;
+            padding: 10px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        textarea::placeholder {
+            color: #888;
+        }
+        .convert-btn, .reset-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        .convert-btn:hover, .reset-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #fff;
+            background-color: #f0f0f0;
+        }
+        .progress-message {
+            color: #ccc;
+            margin: 10px auto;
+            font-size: 1rem;
+            text-align: center;
+            max-width: 800px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #111;
+            border-top: 2px solid #fff;
+            color: #ccc;
+        }
+        footer ul {
+            text-align: left;
+            max-width: 800px;
+            margin: 20px auto;
+            padding-left: 20px;
+        }
+        #file-list {
+            margin-top: 10px;
+            color: #ccc;
+            font-size: 1rem;
+        }
+        #tools-button, #info-button {
+            position: fixed;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            z-index: 1000;
+            transition: transform 0.2s, filter 0.2s;
+        }
+        #tools-button {
+            top: 20px;
+            left: 20px;
+        }
+        #info-button {
+            top: 20px;
+            right: 20px;
+        }
+        #tools-button:hover, #info-button:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 10px #fff);
+        }
+        #tools-button:hover svg, #info-button:hover svg {
+            fill: #ccc;
+            stroke: #ccc;
+        }
+        #tools-popup, #info-popup {
+            position: fixed;
+            top: 0;
+            right: -290px;
+            width: 250px;
+            height: 100%;
+            background-color: #111;
+            color: #fff;
+            box-shadow: -2px 0 10px rgba(255, 255, 255, 0.5);
+            transition: right 0.3s ease-in-out;
+            padding: 20px;
+            padding-bottom: 40px;
+            overflow-y: auto;
+            scrollbar-width: auto;
+            scrollbar-color: #ccc #222;
+            z-index: 999;
+        }
+        #tools-popup::-webkit-scrollbar, #info-popup::-webkit-scrollbar {
+            width: 8px;
+        }
+        #tools-popup::-webkit-scrollbar-thumb, #info-popup::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+        #tools-popup::-webkit-scrollbar-track, #info-popup::-webkit-scrollbar-track {
+            background: #222;
+        }
+        #tools-popup.open, #info-popup.open {
+            right: 0;
+        }
+        #tools-popup h2, #info-popup h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: none;
+        }
+        #info-nav {
+            margin-bottom: 30px;
+        }
+        #tools-popup a, #info-nav a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            margin: 8px 0;
+            padding: 8px;
+            background-color: #222;
+            border-radius: 5px;
+            text-align: center;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+        #tools-popup a:hover, #info-nav a:hover {
+            background-color: #333;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+        #info-content {
+            margin-top: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        #info-content h3 {
+            margin: 15px 0 10px;
+            color: #fff;
+        }
+        #info-content p {
+            margin: 5px 0;
+            color: #ccc;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        /* Tooltip Styles */
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1002; /* Increased z-index */
+        }
+        #tools-button .tooltip {
+            top: 50%;
+            left: 40px; /* Adjusted for visibility */
+            transform: translateY(-50%);
+        }
+        #info-button .tooltip {
+            top: 50%;
+            right: 40px; /* Adjusted for visibility */
+            transform: translateY(-50%);
+        }
+        #tools-button:hover .tooltip,
+        #tools-button:focus .tooltip,
+        #info-button:hover .tooltip,
+        #info-button:focus .tooltip {
+            opacity: 1;
+            transition-delay: 0.1s; /* Slight delay for smoother appearance */
+        }
+        @media (max-width: 600px) {
+            .card {
+                margin: 10px;
+                padding: 15px;
+            }
+            #drag-drop-area {
+                height: 150px;
+            }
+            #drag-drop-area p {
+                font-size: 1rem;
+            }
+            textarea {
+                height: 80px;
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+            .convert-btn, .reset-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            #file-list p {
+                font-size: 0.9rem;
+            }
+            #tools-popup, #info-popup {
+                width: 220px;
+                right: -260px;
+            }
+            #tools-popup.open, #info-popup.open {
+                right: 0;
+            }
+            #tools-button, #info-button {
+                width: 20px;
+                height: 20px;
+            }
+            #info-nav {
+                margin-bottom: 20px;
+            }
+            #tools-popup a, #info-nav a {
+                margin: 6px 0;
+                padding: 6px;
+                font-size: 0.9rem;
+            }
+            .tooltip {
+                font-size: 0.8rem;
+                padding: 5px 8px;
+            }
+            #tools-button .tooltip {
+                left: 32px; /* Adjusted for smaller screens */
+            }
+            #info-button .tooltip {
+                right: 32px; /* Adjusted for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">PDF Forge</h1>
+            <p class="tagline">Convert, edit, and manage your PDFs effortlessly!</p>
+        </div>
+    </header>
+    <main>
+        <button id="tools-button" aria-label="Open tools menu">
+            <span class="sr-only">Open tools menu</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+                <circle cx="4" cy="4" r="2"/>
+                <circle cx="12" cy="4" r="2"/>
+                <circle cx="20" cy="4" r="2"/>
+                <circle cx="4" cy="12" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="20" cy="12" r="2"/>
+                <circle cx="4" cy="20" r="2"/>
+                <circle cx="12" cy="20" r="2"/>
+                <circle cx="20" cy="20" r="2"/>
+            </svg>
+            <span class="tooltip">Other Tools</span>
+        </button>
+        <button id="info-button" aria-label="Open information menu">
+            <span class="sr-only">Open information menu</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v8"/>
+                <circle cx="12" cy="6" r="1"/>
+            </svg>
+            <span class="tooltip">More Info</span>
+        </button>
+        <p class="progress-message" id="progress-message"></p>
+        <section id="upload-section" class="card">
+            <h2>Upload Images</h2>
+            <div id="drag-drop-area">
+                <p>Drag & Drop your images here</p>
+                <input type="file" id="file-upload" accept="image/*" multiple aria-label="Upload images">
+            </div>
+            <div id="file-list"></div>
+            <button class="convert-btn" id="convert-images-btn" aria-label="Convert uploaded images to PDF">Convert Images to PDF</button>
+            <button class="reset-btn" id="reset-files-btn" aria-label="Reset uploaded images">Reset Files</button>
+        </section>
+        <section id="text-to-pdf-section" class="card">
+            <h2>Convert Text/HTML to PDF</h2>
+            <textarea id="text-input" placeholder="Type your text or HTML here..." aria-label="Enter text or HTML for PDF conversion"></textarea>
+            <button class="convert-btn" id="convert-text-btn" aria-label="Convert text or HTML to PDF">Convert Text to PDF</button>
+        </section>
+    </main>
+    <footer>
+        <h2>📖 How to Use</h2>
+        <ul>
+            <li><strong>Convert Text/HTML to PDF:</strong> Type or paste your text or HTML, click "Convert Text to PDF," and watch your PDF download like magic! 🪄</li>
+            <li><strong>Convert Images to PDF:</strong> You already know how to use this! 😎 Drag and drop images or click to upload, then hit "Convert Images to PDF" for a shiny new PDF.</li>
+            <li>Use the "Reset Files" button to clear images and start fresh.</li>
+            <li>Click the grid menu to check out other PDF tools like merging, splitting, or annotating.</li>
+            <li>Click the information icon for Privacy Policy, Terms of Use, and more.</li>
+        </ul>
+        <p>© 2025 PDF Forge. All rights reserved.</p>
+    </footer>
+    <div id="tools-popup" role="dialog" aria-modal="true" aria-labelledby="tools-popup-title">
+        <h2 id="tools-popup-title">Available Tools</h2>
+        <a href="merge.html" title="Combine multiple PDFs into one" aria-describedby="merge-desc">Merge PDFs</a>
+        <span id="merge-desc" class="sr-only">Combine multiple PDFs into one</span>
+        <a href="compress.html" title="Reduce PDF file size" aria-describedby="compress-desc">Compress PDFs</a>
+        <span id="compress-desc" class="sr-only">Reduce PDF file size</span>
+        <a href="to-jpg.html" title="Convert PDFs to JPG images" aria-describedby="to-jpg-desc">Convert to JPG</a>
+        <span id="to-jpg-desc" class="sr-only">Convert PDFs to JPG images</span>
+        <a href="split.html" title="Split a PDF into multiple files" aria-describedby="split-desc">Split PDF</a>
+        <span id="split-desc" class="sr-only">Split a PDF into multiple files</span>
+        <a href="reorder.html" title="Rearrange PDF pages" aria-describedby="reorder-desc">Reorder Pages</a>
+        <span id="reorder-desc" class="sr-only">Rearrange PDF pages</span>
+        <a href="extract.html" title="Extract text or images from PDFs" aria-describedby="extract-desc">Extract Text/Images</a>
+        <span id="extract-desc" class="sr-only">Extract text or images from PDFs</span>
+        <a href="annotate.html" title="Add notes or highlights to PDFs" aria-describedby="annotate-desc">Add Annotations</a>
+        <span id="annotate-desc" class="sr-only">Add notes or highlights to PDFs</span>
+    </div>
+    <div id="info-popup" role="dialog" aria-modal="true" aria-labelledby="info-popup-title">
+        <h2 id="info-popup-title">Information</h2>
+        <nav id="info-nav">
+            <a href="#privacy" class="info-link">Privacy Policy</a>
+            <a href="#terms" class="info-link">Terms of Use</a>
+            <a href="#acknowledgements" class="info-link">Acknowledgements</a>
+            <a href="#contact" class="info-link">Contact</a>
+        </nav>
+        <div id="info-content">
+            <div id="privacy">
+                <h3>Privacy Policy</h3>
+                <p>At PDF Forge, your privacy is our top priority. All our tools run client-side in your browser, so no data, files, or personal info ever touches our servers. Your uploaded files (images, PDFs) stay on your device. We use analytics to understand how users interact with our site (e.g., tracking clicks and visits) in an anonymized manner, which may involve cookies. For AdSense ads, Google may collect anonymized data per their <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>. Last updated: May 12, 2025.</p>
+            </div>
+            <div id="terms">
+                <h3>Terms of Use</h3>
+                <p>By using PDF Forge, you agree to these terms. Our tools (e.g., image-to-PDF, text-to-PDF) are for personal, non-commercial use and run client-side. We’re not responsible for the content of your files or PDFs. Don’t use our tools for illegal stuff or copyrighted material without permission. Tools are provided "as is" with no warranties. Last updated: May 12, 2025.</p>
+            </div>
+            <div id="acknowledgements">
+                <h3>Open Source Acknowledgements</h3>
+                <p>This website uses open-source software libraries, including html2pdf.js and DOMPurify, licensed under the MIT License. Copyrights and licenses are retained as required.</p>
+            </div>
+            <div id="contact">
+                <h3>Contact</h3>
+                <p>Got questions? Want to share feedback? Reach out via our contact form or email (details coming soon). We’ll get back to you faster than you can say "PDF"! 😄</p>
+            </div>
+        </div>
+    </div>
+    <!--
+    MIT License Notices:
+    - html2pdf.js: Copyright (c) 2017-2023 Erik Koopmans (https://github.com/eKoopmans/html2pdf.js)
+    - DOMPurify: Copyright (c) 2015 Mario Heiderich (https://github.com/cure53/DOMPurify)
+    - PDF Forge: Copyright (c) 2025 PDF Forge
+    -->
+    <script>
+        const fileInput = document.getElementById('file-upload');
+        const fileList = document.getElementById('file-list');
+        const convertImagesBtn = document.getElementById('convert-images-btn');
+        const resetFilesBtn = document.getElementById('reset-files-btn');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const progressMessage = document.getElementById('progress-message');
+        let selectedFiles = [];
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            const newFiles = Array.from(fileInput.files).filter(file => file.type.startsWith('image/'));
+            if (newFiles.length < fileInput.files.length) {
+                alert('Only image files (e.g., JPG, PNG) are allowed.');
+            }
+            selectedFiles = [...selectedFiles, ...newFiles];
+            fileInput.value = '';
+            updateFileList();
+        });
+
+        // Drag-and-drop functionality
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('drag-over');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            const droppedFiles = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (droppedFiles.length < event.dataTransfer.files.length) {
+                alert('Only image files (e.g., JPG, PNG) are allowed.');
+            }
+            selectedFiles = [...selectedFiles, ...droppedFiles];
+            updateFileList();
+        });
+
+        // Update file list display
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFiles.length > 0) {
+                dragDropArea.querySelector('p').textContent = 'Add more images here';
+                selectedFiles.forEach((file, index) => {
+                    const listItem = document.createElement('p');
+                    listItem.textContent = `${index + 1}. ${file.name}`;
+                    fileList.appendChild(listItem);
+                });
+            } else {
+                dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here';
+            }
+        }
+
+        // Convert Images to PDF
+        convertImagesBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) {
+                alert('Please upload at least one image to convert.');
+                return;
+            }
+
+            if (typeof html2pdf === 'undefined') {
+                console.error('html2pdf.js is not loaded.');
+                alert('Failed to load html2pdf.js. Please check your connection.');
+                return;
+            }
+
+            progressMessage.textContent = 'Converting images to PDF...';
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.opacity = '0';
+            document.body.appendChild(container);
+            const objectURLs = [];
+
+            try {
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const img = new Image();
+                    img.src = URL.createObjectURL(file);
+                    img.loading = 'lazy';
+                    objectURLs.push(img.src);
+
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => reject(new Error(`Image load timeout: ${file.name}`)), 10000);
+                        img.onload = () => {
+                            clearTimeout(timeout);
+                            const div = document.createElement('div');
+                            div.style.width = '210mm';
+                            div.style.height = '297mm';
+                            div.style.pageBreakAfter = 'always';
+                            div.innerHTML = `<img src="${img.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" loading="lazy">`;
+                            container.appendChild(div);
+                            resolve();
+                        };
+                        img.onerror = () => {
+                            clearTimeout(timeout);
+                            reject(new Error(`Failed to load image: ${file.name}`));
+                        };
+                    });
+                }
+
+                html2pdf()
+                    .from(container)
+                    .set({ margin: 0, filename: 'images-to-pdf.pdf', html2canvas: { scale: 2 } })
+                    .save()
+                    .then(() => {
+                        progressMessage.textContent = 'Conversion complete! Your PDF has been downloaded.';
+                        selectedFiles = [];
+                        fileInput.value = '';
+                        updateFileList();
+                    })
+                    .catch(error => {
+                        console.error('Image-to-PDF error:', error);
+                        alert(`Failed to convert images to PDF: ${error.message}`);
+                        progressMessage.textContent = '';
+                    });
+            } catch (error) {
+                console.error('Image-to-PDF error:', error);
+                alert(`An error occurred: ${error.message}. Please try again.`);
+                progressMessage.textContent = '';
+            } finally {
+                document.body.removeChild(container);
+                setTimeout(() => {
+                    objectURLs.forEach(url => URL.revokeObjectURL(url));
+                }, 1000);
+            }
+        });
+
+        // Reset Files
+        resetFilesBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here';
+            progressMessage.textContent = 'Files have been reset. You can now choose new files.';
+        });
+
+        // Convert Text/HTML to PDF
+        const textInput = document.getElementById('text-input');
+        const convertTextBtn = document.getElementById('convert-text-btn');
+
+        convertTextBtn.addEventListener('click', async () => {
+            const textContent = textInput.value.trim();
+            if (!textContent) {
+                alert('Please enter some text or HTML to convert.');
+                return;
+            }
+
+            if (textContent.length > 100000) {
+                alert('Input is too large. Please limit to 100,000 characters.');
+                return;
+            }
+
+            if (typeof html2pdf === 'undefined') {
+                console.error('html2pdf.js is not loaded.');
+                alert('Failed to load html2pdf.js. Please check your connection.');
+                return;
+            }
+
+            if (typeof DOMPurify === 'undefined') {
+                console.error('DOMPurify is not loaded.');
+                alert('Failed to load DOMPurify. Please check your connection.');
+                return;
+            }
+
+            progressMessage.textContent = 'Converting text to PDF...';
+
+            // Create a container for PDF rendering
+            const element = document.createElement('div');
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            element.style.width = '210mm';
+            element.style.minHeight = '297mm';
+            element.style.padding = '10mm';
+            element.style.boxSizing = 'border-box';
+            element.style.backgroundColor = '#fff';
+            element.style.color = '#000';
+
+            // Sanitize input with DOMPurify, allowing common HTML tags and styles
+            const purifyConfig = {
+                ALLOWED_TAGS: ['p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'b', 'i', 'u', 'strong', 'em', 'br', 'table', 'tr', 'td', 'th', 'a', 'img'],
+                ALLOWED_ATTR: ['style', 'href', 'src', 'alt', 'class'],
+                ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-]|[^:]))/i
+            };
+            const sanitizedContent = DOMPurify.sanitize(textContent, purifyConfig);
+
+            if (!sanitizedContent) {
+                alert('Invalid or unsafe HTML content detected. Please check your input.');
+                progressMessage.textContent = '';
+                return;
+            }
+
+            // Wrap content in a styled container
+            element.innerHTML = `
+                <div style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #000;">
+                    ${sanitizedContent}
+                </div>
+            `;
+
+            document.body.appendChild(element);
+
+            // Log for debugging
+            console.log('Input content:', textContent);
+            console.log('Sanitized content:', sanitizedContent);
+
+            try {
+                // Set up a timeout for PDF generation
+                const pdfGenerationTimeout = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('PDF generation timed out')), 15000);
+                });
+
+                // Generate PDF
+                await Promise.race([
+                    html2pdf()
+                        .from(element)
+                        .set({
+                            margin: [10, 10, 10, 10],
+                            filename: 'text-to-pdf.pdf',
+                            html2canvas: { scale: 2, useCORS: true },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                        })
+                        .save()
+                        .then(() => {
+                            progressMessage.textContent = 'Text conversion complete! Your PDF has been downloaded.';
+                            textInput.value = '';
+                        }),
+                    pdfGenerationTimeout
+                ]);
+            } catch (error) {
+                console.error('Text-to-PDF error:', error);
+                alert(`Failed to convert text to PDF: ${error.message || 'Unknown error'}`);
+                progressMessage.textContent = '';
+            } finally {
+                document.body.removeChild(element);
+            }
+        });
+
+        // Tools Popup Toggle
+        const toolsButton = document.getElementById('tools-button');
+        const toolsPopup = document.getElementById('tools-popup');
+
+        toolsButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toolsPopup.classList.toggle('open');
+            infoPopup.classList.remove('open');
+            if (toolsPopup.classList.contains('open')) {
+                toolsPopup.focus();
+            }
+        });
+
+        // Info Popup Toggle
+        const infoButton = document.getElementById('info-button');
+        const infoPopup = document.getElementById('info-popup');
+
+        infoButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            infoPopup.classList.toggle('open');
+            toolsPopup.classList.remove('open');
+            if (infoPopup.classList.contains('open')) {
+                infoPopup.focus();
+            }
+        });
+
+        // Close Popups with Esc Key or Click Outside
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (toolsPopup.classList.contains('open')) {
+                    toolsPopup.classList.remove('open');
+                }
+                if (infoPopup.classList.contains('open')) {
+                    infoPopup.classList.remove('open');
+                }
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!toolsPopup.contains(event.target) && !toolsButton.contains(event.target) && toolsPopup.classList.contains('open')) {
+                toolsPopup.classList.remove('open');
+            }
+            if (!infoPopup.contains(event.target) && !infoButton.contains(event.target) && infoPopup.classList.contains('open')) {
+                infoPopup.classList.remove('open');
+            }
+        });
+
+        // Info Content Navigation
+        const infoLinks = document.querySelectorAll('.info-link');
+        const infoContent = document.getElementById('info-content');
+        const sections = infoContent.querySelectorAll('div');
+
+        infoLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const sectionId = link.getAttribute('href').substring(1);
+                sections.forEach(section => {
+                    section.style.display = section.id === sectionId ? 'block' : 'none';
+                });
+                infoPopup.scrollTop = 0;
+            });
+        });
+
+        // Initialize Info Content
+        sections.forEach((section, index) => {
+            section.style.display = index === 0 ? 'block' : 'none';
+        });
+
+        // Tooltip Accessibility and Debugging
+        [toolsButton, infoButton].forEach(button => {
+            button.addEventListener('focus', () => {
+                const tooltip = button.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '1';
+                    console.log(`Focus on ${button.id}: Tooltip should be visible`);
+                }
+            });
+            button.addEventListener('blur', () => {
+                const tooltip = button.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                    console.log(`Blur on ${button.id}: Tooltip should be hidden`);
+                }
+            });
+            button.addEventListener('mouseover', () => {
+                const tooltip = button.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '1';
+                    console.log(`Hover on ${button.id}: Tooltip should be visible`);
+                }
+            });
+            button.addEventListener('mouseout', () => {
+                const tooltip = button.querySelector('.tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                    console.log(`Mouseout on ${button.id}: Tooltip should be hidden`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

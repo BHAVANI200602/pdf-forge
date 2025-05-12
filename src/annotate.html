@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Annotator</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #000; color: #fff; }
+        header { text-align: center; padding: 20px; background: linear-gradient(90deg, #000, #111); border-bottom: 2px solid #fff; }
+        .logo { font-size: 2.5rem; color: #fff; text-shadow: none; transition: text-shadow 0.3s ease-in-out; }
+        .logo:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        .tagline { font-size: 1.2rem; color: #ccc; }
+        .card { margin: 20px auto; padding: 20px; max-width: 800px; background-color: #111; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); }
+        #drag-drop-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #drag-drop-area.drag-over {
+            border-color: #ccc;
+            background-color: #222;
+        }
+        #drag-drop-area p {
+            color: #ccc;
+            font-size: 1rem;
+            text-shadow: none;
+        }
+        .convert-btn, .download-btn, .reset-btn, .back-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .convert-btn:hover, .download-btn:hover, .reset-btn:hover, .back-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #fff;
+        }
+        .progress-message { color: #fff; margin-top: 10px; }
+        footer { text-align: center; padding: 10px; background: #111; border-top: 2px solid #fff; color: #ccc; }
+        footer ul { text-align: left; max-width: 800px; margin: 20px auto; padding-left: 20px; }
+        #file-list { margin-top: 10px; color: #ccc; font-size: 1rem; }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        input[type="file"], select, textarea, input[type="number"], input[type="color"] {
+            padding: 8px;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            font-size: 1rem;
+            max-width: 200px;
+        }
+        textarea { resize: vertical; max-height: 100px; }
+        canvas {
+            border: 1px solid #fff;
+            border-radius: 5px;
+            max-width: 100%;
+            height: auto;
+            margin: 10px auto;
+            display: block;
+        }
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        #page-info { font-size: 1rem; color: #ccc; }
+        #annotation-output { margin-top: 20px; text-align: center; }
+        h2:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        h2, .convert-btn, .download-btn, .reset-btn, .back-btn { text-shadow: none; box-shadow: none; border-color: #fff; }
+        @media (max-width: 600px) {
+            .card { margin: 10px; padding: 15px; }
+            input[type="file"], select, textarea, input[type="number"], input[type="color"] {
+                max-width: 100%;
+                font-size: 0.9rem;
+                padding: 6px;
+            }
+            .convert-btn, .download-btn, .reset-btn, .back-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            canvas { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">PDF Annotator</h1>
+            <p class="tagline">Add text annotations to your PDF files.</p>
+        </div>
+    </header>
+    <main class="card">
+        <h2>Annotate Your PDF</h2>
+        <div id="drag-drop-area">
+            <p>Drag & Drop your PDF file here or click to upload</p>
+            <input type="file" id="pdf-upload" accept=".pdf">
+        </div>
+        <div id="file-list"></div>
+        <div class="controls">
+            <textarea id="annotation-text" placeholder="Enter annotation text"></textarea>
+            <select id="font-select">
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times-Roman">Times</option>
+                <option value="Courier">Courier</option>
+            </select>
+            <input type="color" id="color-picker" value="#ff0000">
+            <input type="number" id="font-size" value="14" min="8" max="48">
+            <button class="reset-btn" id="reset-btn">Reset</button>
+        </div>
+        <canvas id="pdf-canvas"></canvas>
+        <div class="nav-controls">
+            <button class="convert-btn" id="prev-page-btn">⬅ Prev Page</button>
+            <span id="page-info">Page 1</span>
+            <button class="convert-btn" id="next-page-btn">Next Page ➡</button>
+        </div>
+        <div id="annotation-output"></div>
+        <button class="convert-btn" id="download-btn">Download</button>
+        <p class="progress-message" id="progress-message"></p>
+        <button class="back-btn" onclick="goBack()">Back</button>
+    </main>
+    <footer>
+        <h2>📖 How to Use</h2>
+        <ul>
+            <li>Upload a PDF using the drag-and-drop area or file input.</li>
+            <li>Enter annotation text, choose font, color, and size.</li>
+            <li>Click on the PDF preview to place annotations.</li>
+            <li>Click and drag annotations to reposition them.</li>
+            <li>Use page navigation buttons to annotate other pages.</li>
+            <li>Click "Download" to save your changes.</li>
+            <li>Use the "Reset" button to clear the file and annotations.</li>
+        </ul>
+        <p>© 2025 PDF Forge. All rights reserved.</p>
+    </footer>
+    <script>
+        const fileInput = document.getElementById('pdf-upload');
+        const fileList = document.getElementById('file-list');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        const annotationText = document.getElementById('annotation-text');
+        const fontSelect = document.getElementById('font-select');
+        const colorPicker = document.getElementById('color-picker');
+        const fontSize = document.getElementById('font-size');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageInfo = document.getElementById('page-info');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressMessage = document.getElementById('progress-message');
+        const annotationOutput = document.getElementById('annotation-output');
+        let pdfDoc = null;
+        let pdf = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let annotations = {};
+        let selectedFile = null;
+        let draggingAnnotation = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                loadPDF(selectedFile);
+            }
+        });
+
+        // Drag-and-drop functionality
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('drag-over');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            if (event.dataTransfer.files.length > 0 && event.dataTransfer.files[0].type === 'application/pdf') {
+                selectedFile = event.dataTransfer.files[0];
+                loadPDF(selectedFile);
+            } else {
+                alert('Please drop a valid PDF file.');
+            }
+        });
+
+        // Update file list display
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFile) {
+                const listItem = document.createElement('p');
+                listItem.textContent = `1. ${selectedFile.name}`;
+                fileList.appendChild(listItem);
+            }
+        }
+
+        // Load and render PDF
+        async function loadPDF(file) {
+            try {
+                progressMessage.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                totalPages = pdf.numPages;
+                currentPage = 1;
+                annotations = {};
+                for (let i = 1; i <= totalPages; i++) {
+                    annotations[i] = [];
+                }
+                updateFileList();
+                renderPage(currentPage);
+                progressMessage.textContent = 'PDF loaded. Click on the canvas to add annotations.';
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('An error occurred while loading the PDF. Please ensure the file is a valid PDF and try again.');
+                progressMessage.textContent = '';
+            }
+        }
+
+        // Render PDF page
+        async function renderPage(pageNum) {
+            try {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1 });
+                const canvasWidth = Math.min(600, window.innerWidth - 40);
+                const scale = canvasWidth / viewport.width;
+                const scaledViewport = page.getViewport({ scale });
+
+                canvas.width = scaledViewport.width;
+                canvas.height = scaledViewport.height;
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: scaledViewport
+                }).promise;
+
+                // Draw annotations
+                ctx.font = `${fontSize.value}px ${fontSelect.value}`;
+                ctx.fillStyle = colorPicker.value;
+                annotations[pageNum].forEach(annotation => {
+                    ctx.fillText(annotation.text, annotation.x, annotation.y);
+                });
+
+                pageInfo.textContent = `Page ${pageNum} of ${totalPages}`;
+                prevPageBtn.disabled = pageNum === 1;
+                nextPageBtn.disabled = pageNum === totalPages;
+            } catch (error) {
+                console.error('Error rendering page:', error);
+                alert('An error occurred while rendering the page. Please try again.');
+            }
+        }
+
+        // Add annotation on canvas click
+        canvas.addEventListener('click', (event) => {
+            if (!pdf) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const text = annotationText.value.trim();
+            if (text) {
+                annotations[currentPage].push({
+                    text,
+                    x,
+                    y,
+                    font: fontSelect.value,
+                    size: parseInt(fontSize.value),
+                    color: colorPicker.value
+                });
+                renderPage(currentPage);
+                annotationText.value = '';
+            }
+        });
+
+        // Drag annotations
+        canvas.addEventListener('mousedown', (event) => {
+            if (!pdf) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            annotations[currentPage].forEach((annotation, index) => {
+                const textWidth = ctx.measureText(annotation.text).width;
+                const textHeight = annotation.size;
+                if (
+                    x >= annotation.x && x <= annotation.x + textWidth &&
+                    y >= annotation.y - textHeight && y <= annotation.y
+                ) {
+                    draggingAnnotation = { index, page: currentPage };
+                    dragOffsetX = x - annotation.x;
+                    dragOffsetY = y - annotation.y;
+                }
+            });
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (draggingAnnotation) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                annotations[draggingAnnotation.page][draggingAnnotation.index].x = x - dragOffsetX;
+                annotations[draggingAnnotation.page][draggingAnnotation.index].y = y - dragOffsetY;
+                renderPage(currentPage);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            draggingAnnotation = null;
+        });
+
+        // Page navigation
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        });
+
+        // Download annotated PDF
+        downloadBtn.addEventListener('click', async () => {
+            if (!pdfDoc) {
+                alert('Please upload a PDF file first.');
+                return;
+            }
+
+            progressMessage.textContent = 'Generating annotated PDF...';
+
+            try {
+                const newPdfDoc = await PDFLib.PDFDocument.create();
+                const pages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+
+                for (let i = 0; i < pages.length; i++) {
+                    const page = pages[i];
+                    newPdfDoc.addPage(page);
+                    const { width, height } = page.getSize();
+                    const pageAnnotations = annotations[i + 1] || [];
+
+                    pageAnnotations.forEach(annotation => {
+                        const rgb = hexToRgb(annotation.color);
+                        page.drawText(annotation.text, {
+                            x: annotation.x,
+                            y: height - annotation.y, // Invert y for PDF coordinates
+                            size: annotation.size,
+                            font: newPdfDoc.embedStandardFont(annotation.font),
+                            color: PDFLib.rgb(rgb.r / 255, rgb.g / 255, rgb.b / 255)
+                        });
+                    });
+                }
+
+                const pdfBytes = await newPdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                annotationOutput.innerHTML = '';
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = 'annotated.pdf';
+                downloadLink.textContent = 'Download Annotated PDF';
+                downloadLink.className = 'download-btn';
+                annotationOutput.appendChild(downloadLink);
+
+                progressMessage.textContent = 'Annotated PDF ready for download!';
+            } catch (error) {
+                console.error('Error generating annotated PDF:', error);
+                alert('An error occurred while generating the annotated PDF. Please try again.');
+                progressMessage.textContent = '';
+            }
+        });
+
+        // Reset functionality
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            pdfDoc = null;
+            pdf = null;
+            annotations = {};
+            currentPage = 1;
+            totalPages = 0;
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your PDF file here or click to upload';
+            annotationOutput.innerHTML = '';
+            progressMessage.textContent = '';
+            annotationText.value = '';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pageInfo.textContent = 'Page 1';
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            alert('File and annotations have been reset. You can now choose a new file.');
+        });
+
+        // Back to Main Page
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // Helper function to convert hex color to RGB
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return { r, g, b };
+        }
+    </script>
+</body>
+</html>

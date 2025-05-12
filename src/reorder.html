@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reorder Pages</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Arial', sans-serif; background-color: #000; color: #fff; }
+        header { text-align: center; padding: 20px; background: linear-gradient(90deg, #000, #111); border-bottom: 2px solid #fff; }
+        .logo { font-size: 2.5rem; color: #fff; text-shadow: none; transition: text-shadow 0.3s ease-in-out; }
+        .logo:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        .tagline { font-size: 1.2rem; color: #ccc; }
+        .card { margin: 20px auto; padding: 20px; max-width: 800px; background-color: #111; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); }
+        #drag-drop-area {
+            border: 2px dashed #fff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #drag-drop-area.drag-over {
+            border-color: #ccc;
+            background-color: #222;
+        }
+        #drag-drop-area p {
+            color: #ccc;
+            font-size: 1rem;
+            text-shadow: none;
+        }
+        .convert-btn, .download-btn, .reset-btn, .back-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .convert-btn:hover, .download-btn:hover, .reset-btn:hover, .back-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #fff;
+        }
+        .progress-message { color: #fff; margin-top: 10px; }
+        footer { text-align: center; padding: 10px; background: #111; border-top: 2px solid #fff; color: #ccc; }
+        footer ul { text-align: left; max-width: 800px; margin: 20px auto; padding-left: 20px; }
+        #file-list { margin-top: 10px; color: #ccc; font-size: 1rem; }
+        #page-thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+            min-height: 160px; /* Ensure drop area is visible */
+        }
+        .thumbnail {
+            width: 100px;
+            height: 140px;
+            background-color: #222;
+            border: 1px solid #fff;
+            border-radius: 5px;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #fff;
+        }
+        .thumbnail.dragging {
+            opacity: 0.5;
+        }
+        .thumbnail-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: #fff;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+        h2:hover { text-shadow: 0 0 15px #fff; cursor: pointer; }
+        h2, .convert-btn, .download-btn, .reset-btn, .back-btn { text-shadow: none; box-shadow: none; border-color: #fff; }
+        @media (max-width: 600px) {
+            .card { margin: 10px; padding: 15px; }
+            .thumbnail {
+                width: 80px;
+                height: 112px;
+            }
+            .convert-btn, .download-btn, .reset-btn, .back-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">Reorder Pages</h1>
+            <p class="tagline">Rearrange the pages of your PDF file.</p>
+        </div>
+    </header>
+    <main>
+        <section class="card">
+            <h2>Upload PDF to Reorder</h2>
+            <div id="drag-drop-area">
+                <p>Drag & Drop your PDF file here or click to upload</p>
+                <input type="file" id="reorder-pdf-upload" accept=".pdf">
+            </div>
+            <div id="file-list"></div>
+            <div id="page-thumbnails"></div>
+            <button class="convert-btn" id="reorder-pdf-btn">Save Reordered PDF</button>
+            <button class="reset-btn" id="reset-btn">Reset</button>
+            <p class="progress-message" id="progress-message"></p>
+            <div id="reorder-output"></div>
+            <button class="back-btn" onclick="goBack()">Back</button>
+        </section>
+    </main>
+    <footer>
+        <h2>📖 How to Use</h2>
+        <ul>
+            <li>Upload a PDF by dragging it into the drag-and-drop area or clicking to select a file.</li>
+            <li>Wait for the PDF to load; thumbnails of each page will appear below.</li>
+            <li>Drag a page thumbnail and drop it onto another thumbnail to swap their positions.</li>
+            <li>Repeat dragging and dropping to arrange pages in your desired order.</li>
+            <li>Click "Save Reordered PDF" to generate and download the reordered PDF.</li>
+            <li>Use the "Reset" button to clear the current PDF and start over.</li>
+            <li>Click "Back" to return to the main menu.</li>
+        </ul>
+        <p>© 2025 PDF Forge. All rights reserved.</p>
+    </footer>
+    <script>
+        const fileInput = document.getElementById('reorder-pdf-upload');
+        const fileList = document.getElementById('file-list');
+        const dragDropArea = document.getElementById('drag-drop-area');
+        const thumbnailsDiv = document.getElementById('page-thumbnails');
+        const reorderBtn = document.getElementById('reorder-pdf-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressMessage = document.getElementById('progress-message');
+        const reorderOutput = document.getElementById('reorder-output');
+        let pdfDoc = null;
+        let pagesOrder = [];
+        let selectedFile = null;
+        let thumbnails = [];
+
+        // Handle file input change
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                handleFile(selectedFile);
+            }
+        });
+
+        // Drag-and-drop functionality for file upload
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('drag-over');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('drag-over');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('drag-over');
+            if (event.dataTransfer.files.length > 0 && event.dataTransfer.files[0].type === 'application/pdf') {
+                selectedFile = event.dataTransfer.files[0];
+                handleFile(selectedFile);
+            } else {
+                alert('Please drop a valid PDF file.');
+            }
+        });
+
+        // Update file list display
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFile) {
+                const listItem = document.createElement('p');
+                listItem.textContent = `1. ${selectedFile.name}`;
+                fileList.appendChild(listItem);
+            }
+        }
+
+        async function handleFile(file) {
+            try {
+                progressMessage.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                thumbnailsDiv.innerHTML = '';
+                pagesOrder = Array.from({ length: pdf.numPages }, (_, i) => i);
+                thumbnails = [];
+
+                for (let i = 0; i < pdf.numPages; i++) {
+                    const page = await pdf.getPage(i + 1);
+                    const viewport = page.getViewport({ scale: 0.4 }); // Reduced scale for performance
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    canvas.dataset.pageIndex = i;
+                    canvas.classList.add('thumbnail');
+                    canvas.draggable = true;
+
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'thumbnail-number';
+                    numberDiv.textContent = i + 1;
+                    canvas.appendChild(numberDiv);
+
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    thumbnailsDiv.appendChild(canvas);
+                    thumbnails.push(canvas);
+                }
+
+                updateFileList();
+                enableDragAndDrop();
+                progressMessage.textContent = 'PDF loaded. Drag thumbnails to reorder.';
+            } catch (error) {
+                console.error('Error processing PDF:', error);
+                alert('An error occurred while processing the PDF. The file may be corrupt or not a valid PDF. Please try another file.');
+                progressMessage.textContent = '';
+            }
+        }
+
+        function enableDragAndDrop() {
+            let draggedIndex = null;
+
+            thumbnailsDiv.addEventListener('dragstart', (event) => {
+                const thumbnail = event.target.closest('.thumbnail');
+                if (thumbnail) {
+                    draggedIndex = parseInt(thumbnail.dataset.pageIndex);
+                    thumbnail.classList.add('dragging');
+                    event.dataTransfer.setData('text/plain', draggedIndex);
+                }
+            });
+
+            thumbnailsDiv.addEventListener('dragend', (event) => {
+                const thumbnail = event.target.closest('.thumbnail');
+                if (thumbnail) {
+                    thumbnail.classList.remove('dragging');
+                }
+            });
+
+            thumbnailsDiv.addEventListener('dragover', (event) => {
+                event.preventDefault();
+            });
+
+            thumbnailsDiv.addEventListener('drop', (event) => {
+                event.preventDefault();
+                const targetThumbnail = event.target.closest('.thumbnail');
+                if (targetThumbnail && draggedIndex !== null) {
+                    const targetIndex = parseInt(targetThumbnail.dataset.pageIndex);
+                    if (draggedIndex !== targetIndex) {
+                        // Update pagesOrder
+                        const [movedPage] = pagesOrder.splice(draggedIndex, 1);
+                        pagesOrder.splice(targetIndex, 0, movedPage);
+
+                        // Update thumbnails array
+                        const [movedThumbnail] = thumbnails.splice(draggedIndex, 1);
+                        thumbnails.splice(targetIndex, 0, movedThumbnail);
+
+                        // Update DOM
+                        thumbnailsDiv.innerHTML = '';
+                        thumbnails.forEach((canvas, i) => {
+                            canvas.dataset.pageIndex = i;
+                            canvas.querySelector('.thumbnail-number').textContent = i + 1;
+                            thumbnailsDiv.appendChild(canvas);
+                        });
+
+                        draggedIndex = null;
+                    }
+                }
+            });
+        }
+
+        reorderBtn.addEventListener('click', async () => {
+            if (!pdfDoc || pagesOrder.length === 0) {
+                alert('Please upload a PDF file first.');
+                return;
+            }
+
+            progressMessage.textContent = 'Saving reordered PDF...';
+
+            try {
+                const newPdfDoc = await PDFLib.PDFDocument.create();
+                for (const pageIndex of pagesOrder) {
+                    const [copiedPage] = await newPdfDoc.copyPages(pdfDoc, [pageIndex]);
+                    newPdfDoc.addPage(copiedPage);
+                }
+
+                const newPdfBytes = await newPdfDoc.save();
+                const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                reorderOutput.innerHTML = '';
+                const downloadBtn = document.createElement('a');
+                downloadBtn.href = url;
+                downloadBtn.download = 'reordered.pdf';
+                downloadBtn.textContent = 'Download Reordered PDF';
+                downloadBtn.className = 'download-btn';
+                reorderOutput.appendChild(downloadBtn);
+
+                progressMessage.textContent = 'Reordered PDF ready for download!';
+            } catch (error) {
+                console.error('Error saving reordered PDF:', error);
+                alert('An error occurred while saving the reordered PDF. Please try again.');
+                progressMessage.textContent = '';
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            pdfDoc = null;
+            pagesOrder = [];
+            thumbnails = [];
+            fileInput.value = '';
+            fileList.innerHTML = '';
+            thumbnailsDiv.innerHTML = '';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your PDF file here or click to upload';
+            reorderOutput.innerHTML = '';
+            progressMessage.textContent = '';
+            alert('File has been reset. You can now choose a new file.');
+        });
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
