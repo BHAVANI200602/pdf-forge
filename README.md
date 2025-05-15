@@ -37,19 +37,28 @@ Other Tools: Access via the grid menu (top-left) for merging, compressing, etc.
 Info: Click the info icon (top-right) for Privacy Policy, Terms of Use, or Contact details.
 
 Project Structure
-pdfforge/
-├── assets/css/styles.css    # CSS styles
-├── public/favicon.ico       # Favicon
-├── index.html               # Main page
-├── merge.html               # Merge PDFs
-├── compress.html            # Compress PDFs
-├── to-jpg.html              # PDF to JPG
-├── split.html               # Split PDFs
-├── reorder.html             # Reorder pages
-├── extract.html             # Extract text/images
-├── annotate.html            # Add annotations
-└── README.md                # Documentation
-|__ LICENSE                  # Details about License
+PDF-Forge/
+├── public/
+│   └── android-chrome-512x512.png
+├── src/
+│   ├── assets/
+│   │   ├── css/
+│   │   │   └── styles.css
+│   │   ├── js/
+│   │   │   └── scripts.js
+│   │   └── fonts/
+│   ├── annotate.html
+│   ├── compress.html
+│   ├── extract.html
+│   ├── googled2e74ec2086....html
+│   ├── index.html
+│   ├── merge.html
+│   ├── reorder.html
+│   ├── split.html
+│   └── to-jpg.html
+├── package.json
+└── README.md
+
 Technologies
 
 HTML5, CSS3, JavaScript

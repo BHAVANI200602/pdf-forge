@@ -3,33 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Forge - Convert Images & Text to PDF</title>
-    <meta name="description" content="PDF Forge: Convert images and text to PDF effortlessly. Merge, compress, split, and manage PDFs with our free, client-side tools.">
-    <meta name="keywords" content="PDF converter, images to PDF, text to PDF, merge PDFs, compress PDFs, split PDFs, PDF tools, free PDF editor">
+    <title>PDF Forge - Convert Images to PDF</title>
+    <meta name="description" content="Effortlessly convert images to PDF with PDF Forge. Merge, compress, split, edit PDFs (annotate, extract, JPG) for free, client-side.">
+    <meta name="keywords" content="PDF converter, images to PDF, merge PDF, compress PDF, split PDF, annotate PDF, extract PDF, PDF to JPG, reorder PDF pages, PDF page reorder, rearrange PDF pages, PDF tools, free PDF editor">
     <meta name="robots" content="index, follow">
     <meta name="author" content="PDF Forge">
     <!-- Open Graph Tags -->
-    <meta property="og:title" content="PDF Forge - Free PDF Conversion Tools">
-    <meta property="og:description" content="Convert images and text to PDF, merge, compress, or split PDFs with PDF Forge's client-side tools. Fast, free, and easy to use.">
+    <meta property="og:title" content="PDF Forge - Convert Images to PDF">
+    <meta property="og:description" content="Effortlessly convert images to PDF with PDF Forge. Merge, compress, split, edit PDFs (annotate, extract, JPG) for free, client-side.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://pdfforge.vercel.app">
-    <meta property="og:image" content="https://pdfforge.vercel.app/public/favicon.ico">
+    <meta property="og:url" content="https://pdf-forge-lemon.vercel.app">
+    <meta property="og:image" content="https://pdf-forge-lemon.vercel.app/public/og-image.jpg">
+    <meta property="og:site_name" content="PDF Forge">
+    <meta property="og:locale" content="en_US">
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="PDF Forge - Free PDF Conversion Tools">
-    <meta name="twitter:description" content="Convert images and text to PDF, merge, compress, or split PDFs with PDF Forge's client-side tools. Fast, free, and easy to use.">
-    <meta name="twitter:image" content="https://pdfforge.vercel.app/public/favicon.ico">
+    <meta name="twitter:title" content="PDF Forge - Convert Images to PDF">
+    <meta name="twitter:description" content="Effortlessly convert images to PDF with PDF Forge. Merge, compress, split, edit PDFs (annotate, extract, JPG) for free, client-side.">
+    <meta name="twitter:image" content="https://pdf-forge-lemon.vercel.app/public/og-image.jpg">
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pdf-forge-lemon.vercel.app/">
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="icon" href="../public/favicon.ico" type="image/x-icon">
-    <!--
-    Note: For SEO, create sitemap.xml and robots.txt in the root directory.
-    Example robots.txt:
-    User-agent: *
-    Allow: /
-    Sitemap: https://pdfforge.vercel.app/sitemap.xml
-    -->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -89,36 +84,36 @@
         #file-upload {
             margin-top: 10px;
         }
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: 1px solid #fff;
-            background-color: #111;
-            color: #fff;
-            padding: 10px;
-            font-size: 1rem;
-            resize: vertical;
-        }
-        textarea::placeholder {
-            color: #888;
-        }
-        .convert-btn, .reset-btn {
+        .convert-btn, .reset-btn, .tools-btn {
             background-color: #fff;
             color: #000;
             border: none;
-            padding: 10px 20px;
             margin: 10px 5px;
             border-radius: 5px;
-            font-size: 1rem;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
         }
-        .convert-btn:hover, .reset-btn:hover {
+        .convert-btn, .reset-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+        .tools-btn {
+            padding: 14px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: block;
+            width: calc(100% - 40px);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .convert-btn:hover, .reset-btn:hover, .tools-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 0 15px #fff;
             background-color: #f0f0f0;
+        }
+        .tools-btn-container {
+            text-align: center;
+            margin-top: 15px;
         }
         .progress-message {
             color: #ccc;
@@ -249,7 +244,6 @@
             clip: rect(0, 0, 0, 0);
             border: 0;
         }
-        /* Tooltip Styles */
         .tooltip {
             position: absolute;
             background-color: #333;
@@ -262,16 +256,16 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease-in-out;
-            z-index: 1002; /* Increased z-index */
+            z-index: 1002;
         }
         #tools-button .tooltip {
             top: 50%;
-            left: 40px; /* Adjusted for visibility */
+            left: 40px;
             transform: translateY(-50%);
         }
         #info-button .tooltip {
             top: 50%;
-            right: 40px; /* Adjusted for visibility */
+            right: 40px;
             transform: translateY(-50%);
         }
         #tools-button:hover .tooltip,
@@ -279,23 +273,42 @@
         #info-button:hover .tooltip,
         #info-button:focus .tooltip {
             opacity: 1;
-            transition-delay: 0.1s; /* Slight delay for smoother appearance */
+            transition-delay: 0.1s;
+        }
+        @media (max-width: 800px) {
+            .card {
+                max-width: 90vw;
+                margin: 15px auto;
+                padding: 15px;
+            }
+            .tools-btn {
+                width: calc(100% - 30px);
+                max-width: none;
+                padding: 12px 18px;
+                font-size: 1.1rem;
+            }
+            #drag-drop-area {
+                height: 180px;
+            }
+            #drag-drop-area p {
+                font-size: 1.1rem;
+            }
         }
         @media (max-width: 600px) {
             .card {
                 margin: 10px;
                 padding: 15px;
             }
+            .tools-btn {
+                width: calc(100% - 30px);
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
             #drag-drop-area {
                 height: 150px;
             }
             #drag-drop-area p {
                 font-size: 1rem;
-            }
-            textarea {
-                height: 80px;
-                font-size: 0.9rem;
-                padding: 8px;
             }
             .convert-btn, .reset-btn {
                 padding: 8px 16px;
@@ -328,10 +341,32 @@
                 padding: 5px 8px;
             }
             #tools-button .tooltip {
-                left: 32px; /* Adjusted for smaller screens */
+                left: 32px;
             }
             #info-button .tooltip {
-                right: 32px; /* Adjusted for smaller screens */
+                right: 32px;
+            }
+        }
+        @media (max-width: 400px) {
+            .card {
+                margin: 5px;
+                padding: 10px;
+            }
+            .tools-btn {
+                width: calc(100% - 20px);
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+            #drag-drop-area {
+                height: 120px;
+                padding: 15px;
+            }
+            #drag-drop-area p {
+                font-size: 0.9rem;
+            }
+            .convert-btn, .reset-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -372,26 +407,27 @@
         <section id="upload-section" class="card">
             <h2>Upload Images</h2>
             <div id="drag-drop-area">
-                <p>Drag & Drop your images here</p>
-                <input type="file" id="file-upload" accept="image/*" multiple aria-label="Upload images">
+                <p>Drag & Drop your images here (or tap to select)</p>
+                <input type="file" id="file-upload" accept="image/jpeg,image/png,image/gif,image/bmp,image/tiff,image/heic,image/heif" multiple aria-label="Upload images">
             </div>
             <div id="file-list"></div>
             <button class="convert-btn" id="convert-images-btn" aria-label="Convert uploaded images to PDF">Convert Images to PDF</button>
             <button class="reset-btn" id="reset-files-btn" aria-label="Reset uploaded images">Reset Files</button>
         </section>
-        <section id="text-to-pdf-section" class="card">
-            <h2>Convert Text/HTML to PDF</h2>
-            <textarea id="text-input" placeholder="Type your text or HTML here..." aria-label="Enter text or HTML for PDF conversion"></textarea>
-            <button class="convert-btn" id="convert-text-btn" aria-label="Convert text or HTML to PDF">Convert Text to PDF</button>
+        <section id="tools-section" class="card">
+            <h2>Looking for other tools?</h2>
+            <p>Explore more PDF tools like merging, splitting, or annotating!</p>
+            <div class="tools-btn-container">
+                <button class="tools-btn" id="explore-tools-btn" aria-label="Explore other PDF tools">Explore Tools</button>
+            </div>
         </section>
     </main>
     <footer>
         <h2>📖 How to Use</h2>
         <ul>
-            <li><strong>Convert Text/HTML to PDF:</strong> Type or paste your text or HTML, click "Convert Text to PDF," and watch your PDF download like magic! 🪄</li>
             <li><strong>Convert Images to PDF:</strong> You already know how to use this! 😎 Drag and drop images or click to upload, then hit "Convert Images to PDF" for a shiny new PDF.</li>
             <li>Use the "Reset Files" button to clear images and start fresh.</li>
-            <li>Click the grid menu to check out other PDF tools like merging, splitting, or annotating.</li>
+            <li>Click the grid menu or "Explore Tools" button to check out other PDF tools like merging, splitting, or annotating.</li>
             <li>Click the information icon for Privacy Policy, Terms of Use, and more.</li>
         </ul>
         <p>© 2025 PDF Forge. All rights reserved.</p>
@@ -428,11 +464,11 @@
             </div>
             <div id="terms">
                 <h3>Terms of Use</h3>
-                <p>By using PDF Forge, you agree to these terms. Our tools (e.g., image-to-PDF, text-to-PDF) are for personal, non-commercial use and run client-side. We’re not responsible for the content of your files or PDFs. Don’t use our tools for illegal stuff or copyrighted material without permission. Tools are provided "as is" with no warranties. Last updated: May 12, 2025.</p>
+                <p>By using PDF Forge, you agree to these terms. Our tools (e.g., image-to-PDF) are for personal, non-commercial use and run client-side. We’re not responsible for the content of your files or PDFs. Don’t use our tools for illegal stuff or copyrighted material without permission. Tools are provided "as is" with no warranties. Last updated: May 12, 2025.</p>
             </div>
             <div id="acknowledgements">
                 <h3>Open Source Acknowledgements</h3>
-                <p>This website uses open-source software libraries, including html2pdf.js and DOMPurify, licensed under the MIT License. Copyrights and licenses are retained as required.</p>
+                <p>This website uses open-source software libraries, licensed under the MIT License. Copyrights and licenses are retained as required.</p>
             </div>
             <div id="contact">
                 <h3>Contact</h3>
@@ -440,12 +476,7 @@
             </div>
         </div>
     </div>
-    <!--
-    MIT License Notices:
-    - html2pdf.js: Copyright (c) 2017-2023 Erik Koopmans (https://github.com/eKoopmans/html2pdf.js)
-    - DOMPurify: Copyright (c) 2015 Mario Heiderich (https://github.com/cure53/DOMPurify)
-    - PDF Forge: Copyright (c) 2025 PDF Forge
-    -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script>
         const fileInput = document.getElementById('file-upload');
         const fileList = document.getElementById('file-list');
@@ -453,14 +484,37 @@
         const resetFilesBtn = document.getElementById('reset-files-btn');
         const dragDropArea = document.getElementById('drag-drop-area');
         const progressMessage = document.getElementById('progress-message');
+        const exploreToolsBtn = document.getElementById('explore-tools-btn');
         let selectedFiles = [];
+
+        // Define supported image formats (MIME types and extensions)
+        const supportedImageTypes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff',
+            'image/heic', 'image/heif'
+        ];
+        const supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'heic', 'heif'];
+
+        // Validate file type
+        function isSupportedImage(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            return supportedImageTypes.includes(file.type) || supportedExtensions.includes(extension);
+        }
 
         // Handle file input change
         fileInput.addEventListener('change', () => {
-            const newFiles = Array.from(fileInput.files).filter(file => file.type.startsWith('image/'));
-            if (newFiles.length < fileInput.files.length) {
-                alert('Only image files (e.g., JPG, PNG) are allowed.');
+            const newFiles = Array.from(fileInput.files).filter(file => {
+                if (isSupportedImage(file)) {
+                    return true;
+                } else {
+                    progressMessage.textContent = `Unsupported file format: ${file.name}. Please upload JPEG, PNG, GIF, BMP, TIFF, or HEIC images.`;
+                    return false;
+                }
+            });
+
+            if (newFiles.length === 0 && fileInput.files.length > 0) {
+                progressMessage.textContent = 'No supported image files were selected. Supported formats: JPEG, PNG, GIF, BMP, TIFF, HEIC.';
             }
+
             selectedFiles = [...selectedFiles, ...newFiles];
             fileInput.value = '';
             updateFileList();
@@ -479,10 +533,19 @@
         dragDropArea.addEventListener('drop', (event) => {
             event.preventDefault();
             dragDropArea.classList.remove('drag-over');
-            const droppedFiles = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-            if (droppedFiles.length < event.dataTransfer.files.length) {
-                alert('Only image files (e.g., JPG, PNG) are allowed.');
+            const droppedFiles = Array.from(event.dataTransfer.files).filter(file => {
+                if (isSupportedImage(file)) {
+                    return true;
+                } else {
+                    progressMessage.textContent = `Unsupported file format: ${file.name}. Please upload JPEG, PNG, GIF, BMP, TIFF, or HEIC images.`;
+                    return false;
+                }
+            });
+
+            if (droppedFiles.length === 0 && event.dataTransfer.files.length > 0) {
+                progressMessage.textContent = 'No supported image files were dropped. Supported formats: JPEG, PNG, GIF, BMP, TIFF, HEIC.';
             }
+
             selectedFiles = [...selectedFiles, ...droppedFiles];
             updateFileList();
         });
@@ -491,88 +554,172 @@
         function updateFileList() {
             fileList.innerHTML = '';
             if (selectedFiles.length > 0) {
-                dragDropArea.querySelector('p').textContent = 'Add more images here';
+                dragDropArea.querySelector('p').textContent = 'Add more images here (or tap to select)';
                 selectedFiles.forEach((file, index) => {
                     const listItem = document.createElement('p');
                     listItem.textContent = `${index + 1}. ${file.name}`;
                     fileList.appendChild(listItem);
                 });
             } else {
-                dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here';
+                dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here (or tap to select)';
             }
         }
 
-        // Convert Images to PDF
+        // Convert file to base64
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Load and normalize image to JPEG
+        async function loadAndNormalizeImage(file) {
+            try {
+                // Convert file to base64
+                const base64Data = await fileToBase64(file);
+                
+                // Create an image element to load the base64 data
+                const img = new Image();
+                img.src = base64Data;
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
+                });
+
+                // Create a canvas to normalize the image to JPEG
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Resize image to a maximum dimension of 1000px to prevent memory issues
+                let { width, height } = img;
+                const maxDimension = 1000;
+                if (width > height) {
+                    if (width > maxDimension) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    }
+                } else {
+                    if (height > maxDimension) {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert to JPEG base64
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                const base64String = jpegDataUrl.split(',')[1]; // Remove the data:image/jpeg;base64, prefix
+
+                return { base64: base64String, width, height };
+            } catch (error) {
+                throw new Error(`Image processing failed for ${file.name}: ${error.message}`);
+            }
+        }
+
+        // Convert Images to PDF using pdf-lib
         convertImagesBtn.addEventListener('click', async () => {
             if (selectedFiles.length === 0) {
                 alert('Please upload at least one image to convert.');
                 return;
             }
 
-            if (typeof html2pdf === 'undefined') {
-                console.error('html2pdf.js is not loaded.');
-                alert('Failed to load html2pdf.js. Please check your connection.');
-                return;
-            }
-
-            progressMessage.textContent = 'Converting images to PDF...';
-            const container = document.createElement('div');
-            container.style.position = 'fixed';
-            container.style.opacity = '0';
-            document.body.appendChild(container);
-            const objectURLs = [];
+            progressMessage.textContent = 'Processing images...';
+            const failedImages = [];
 
             try {
-                for (let i = 0; i < selectedFiles.length; i++) {
-                    const file = selectedFiles[i];
-                    const img = new Image();
-                    img.src = URL.createObjectURL(file);
-                    img.loading = 'lazy';
-                    objectURLs.push(img.src);
+                // Create a new PDF document
+                const pdfDoc = await PDFLib.PDFDocument.create();
 
-                    await new Promise((resolve, reject) => {
-                        const timeout = setTimeout(() => reject(new Error(`Image load timeout: ${file.name}`)), 10000);
-                        img.onload = () => {
-                            clearTimeout(timeout);
-                            const div = document.createElement('div');
-                            div.style.width = '210mm';
-                            div.style.height = '297mm';
-                            div.style.pageBreakAfter = 'always';
-                            div.innerHTML = `<img src="${img.src}" style="max-width: 100%; max-height: 100%; object-fit: contain;" loading="lazy">`;
-                            container.appendChild(div);
-                            resolve();
-                        };
-                        img.onerror = () => {
-                            clearTimeout(timeout);
-                            reject(new Error(`Failed to load image: ${file.name}`));
-                        };
-                    });
+                // Process each image
+                for (let index = 0; index < selectedFiles.length; index++) {
+                    const file = selectedFiles[index];
+                    progressMessage.textContent = `Processing image ${index + 1} of ${selectedFiles.length}: ${file.name}`;
+
+                    try {
+                        // Load and normalize image to JPEG
+                        const { base64, width, height } = await loadAndNormalizeImage(file);
+
+                        // Embed the JPEG image in the PDF
+                        const pdfImage = await pdfDoc.embedJpg(base64);
+
+                        // Add a new page with A4 dimensions (595x842 points)
+                        const page = pdfDoc.addPage([595, 842]);
+
+                        // Calculate image dimensions to fit within A4 page with margins
+                        const margin = 28; // 10mm margin at 72 DPI (~28 points)
+                        const maxWidth = 595 - 2 * margin;
+                        const maxHeight = 842 - 2 * margin;
+                        let imgWidth = width;
+                        let imgHeight = height;
+
+                        // Scale image to fit while maintaining aspect ratio
+                        if (imgWidth > maxWidth) {
+                            imgHeight = (maxWidth / imgWidth) * imgHeight;
+                            imgWidth = maxWidth;
+                        }
+                        if (imgHeight > maxHeight) {
+                            imgWidth = (maxHeight / imgHeight) * imgWidth;
+                            imgHeight = maxHeight;
+                        }
+
+                        // Center the image on the page
+                        const x = (595 - imgWidth) / 2;
+                        const y = (842 - imgHeight) / 2;
+
+                        // Draw the image
+                        page.drawImage(pdfImage, {
+                            x,
+                            y,
+                            width: imgWidth,
+                            height: imgHeight,
+                        });
+                    } catch (error) {
+                        console.error(error);
+                        failedImages.push(file.name);
+                        progressMessage.textContent = `Failed to process ${file.name}. Continuing with remaining images...`;
+                    }
                 }
 
-                html2pdf()
-                    .from(container)
-                    .set({ margin: 0, filename: 'images-to-pdf.pdf', html2canvas: { scale: 2 } })
-                    .save()
-                    .then(() => {
-                        progressMessage.textContent = 'Conversion complete! Your PDF has been downloaded.';
-                        selectedFiles = [];
-                        fileInput.value = '';
-                        updateFileList();
-                    })
-                    .catch(error => {
-                        console.error('Image-to-PDF error:', error);
-                        alert(`Failed to convert images to PDF: ${error.message}`);
-                        progressMessage.textContent = '';
-                    });
+                if (pdfDoc.getPageCount() === 0) {
+                    throw new Error('No images could be processed for conversion.');
+                }
+
+                progressMessage.textContent = 'Generating PDF...';
+
+                // Serialize the PDF document
+                const pdfBytes = await pdfDoc.save();
+                const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // Trigger download
+                const link = document.createElement('a');
+                link.href = pdfUrl;
+                link.download = 'converted-images.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(pdfUrl);
+
+                progressMessage.textContent = `Conversion complete! PDF downloaded with ${pdfDoc.getPageCount()} page(s).`;
+                if (failedImages.length > 0) {
+                    progressMessage.textContent += ` Warning: ${failedImages.length} image(s) failed to process: ${failedImages.join(', ')}.`;
+                }
+
+                // Reset after successful conversion
+                selectedFiles = [];
+                fileInput.value = '';
+                updateFileList();
             } catch (error) {
                 console.error('Image-to-PDF error:', error);
-                alert(`An error occurred: ${error.message}. Please try again.`);
+                alert(`Failed to convert images to PDF: ${error.message}${failedImages.length > 0 ? ` Skipped images: ${failedImages.join(', ')}.` : ''}`);
                 progressMessage.textContent = '';
-            } finally {
-                document.body.removeChild(container);
-                setTimeout(() => {
-                    objectURLs.forEach(url => URL.revokeObjectURL(url));
-                }, 1000);
             }
         });
 
@@ -581,133 +728,44 @@
             selectedFiles = [];
             fileInput.value = '';
             fileList.innerHTML = '';
-            dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here';
+            dragDropArea.querySelector('p').textContent = 'Drag & Drop your images here (or tap to select)';
             progressMessage.textContent = 'Files have been reset. You can now choose new files.';
-        });
-
-        // Convert Text/HTML to PDF
-        const textInput = document.getElementById('text-input');
-        const convertTextBtn = document.getElementById('convert-text-btn');
-
-        convertTextBtn.addEventListener('click', async () => {
-            const textContent = textInput.value.trim();
-            if (!textContent) {
-                alert('Please enter some text or HTML to convert.');
-                return;
-            }
-
-            if (textContent.length > 100000) {
-                alert('Input is too large. Please limit to 100,000 characters.');
-                return;
-            }
-
-            if (typeof html2pdf === 'undefined') {
-                console.error('html2pdf.js is not loaded.');
-                alert('Failed to load html2pdf.js. Please check your connection.');
-                return;
-            }
-
-            if (typeof DOMPurify === 'undefined') {
-                console.error('DOMPurify is not loaded.');
-                alert('Failed to load DOMPurify. Please check your connection.');
-                return;
-            }
-
-            progressMessage.textContent = 'Converting text to PDF...';
-
-            // Create a container for PDF rendering
-            const element = document.createElement('div');
-            element.style.position = 'absolute';
-            element.style.left = '-9999px';
-            element.style.width = '210mm';
-            element.style.minHeight = '297mm';
-            element.style.padding = '10mm';
-            element.style.boxSizing = 'border-box';
-            element.style.backgroundColor = '#fff';
-            element.style.color = '#000';
-
-            // Sanitize input with DOMPurify, allowing common HTML tags and styles
-            const purifyConfig = {
-                ALLOWED_TAGS: ['p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'b', 'i', 'u', 'strong', 'em', 'br', 'table', 'tr', 'td', 'th', 'a', 'img'],
-                ALLOWED_ATTR: ['style', 'href', 'src', 'alt', 'class'],
-                ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-]|[^:]))/i
-            };
-            const sanitizedContent = DOMPurify.sanitize(textContent, purifyConfig);
-
-            if (!sanitizedContent) {
-                alert('Invalid or unsafe HTML content detected. Please check your input.');
-                progressMessage.textContent = '';
-                return;
-            }
-
-            // Wrap content in a styled container
-            element.innerHTML = `
-                <div style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #000;">
-                    ${sanitizedContent}
-                </div>
-            `;
-
-            document.body.appendChild(element);
-
-            // Log for debugging
-            console.log('Input content:', textContent);
-            console.log('Sanitized content:', sanitizedContent);
-
-            try {
-                // Set up a timeout for PDF generation
-                const pdfGenerationTimeout = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('PDF generation timed out')), 15000);
-                });
-
-                // Generate PDF
-                await Promise.race([
-                    html2pdf()
-                        .from(element)
-                        .set({
-                            margin: [10, 10, 10, 10],
-                            filename: 'text-to-pdf.pdf',
-                            html2canvas: { scale: 2, useCORS: true },
-                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                        })
-                        .save()
-                        .then(() => {
-                            progressMessage.textContent = 'Text conversion complete! Your PDF has been downloaded.';
-                            textInput.value = '';
-                        }),
-                    pdfGenerationTimeout
-                ]);
-            } catch (error) {
-                console.error('Text-to-PDF error:', error);
-                alert(`Failed to convert text to PDF: ${error.message || 'Unknown error'}`);
-                progressMessage.textContent = '';
-            } finally {
-                document.body.removeChild(element);
-            }
         });
 
         // Tools Popup Toggle
         const toolsButton = document.getElementById('tools-button');
         const toolsPopup = document.getElementById('tools-popup');
+        const infoPopup = document.getElementById('info-popup');
 
-        toolsButton.addEventListener('click', (event) => {
+        function toggleToolsPopup(event) {
             event.stopPropagation();
+            console.log('Toggling tools popup');
             toolsPopup.classList.toggle('open');
             infoPopup.classList.remove('open');
             if (toolsPopup.classList.contains('open')) {
+                console.log('Tools popup opened');
                 toolsPopup.focus();
+            } else {
+                console.log('Tools popup closed');
             }
-        });
+        }
+
+        toolsButton.addEventListener('click', toggleToolsPopup);
+        exploreToolsBtn.addEventListener('click', toggleToolsPopup);
 
         // Info Popup Toggle
         const infoButton = document.getElementById('info-button');
-        const infoPopup = document.getElementById('info-popup');
 
         infoButton.addEventListener('click', (event) => {
             event.stopPropagation();
+            console.log('Info button clicked, toggling info popup');
             infoPopup.classList.toggle('open');
             toolsPopup.classList.remove('open');
             if (infoPopup.classList.contains('open')) {
+                console.log('Info popup opened');
                 infoPopup.focus();
+            } else {
+                console.log('Info popup closed');
             }
         });
 
@@ -715,19 +773,23 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 if (toolsPopup.classList.contains('open')) {
+                    console.log('Escape key pressed, closing tools popup');
                     toolsPopup.classList.remove('open');
                 }
                 if (infoPopup.classList.contains('open')) {
+                    console.log('Escape key pressed, closing info popup');
                     infoPopup.classList.remove('open');
                 }
             }
         });
 
         document.addEventListener('click', (event) => {
-            if (!toolsPopup.contains(event.target) && !toolsButton.contains(event.target) && toolsPopup.classList.contains('open')) {
+            if (!toolsPopup.contains(event.target) && !toolsButton.contains(event.target) && !exploreToolsBtn.contains(event.target) && toolsPopup.classList.contains('open')) {
+                console.log('Clicked outside, closing tools popup');
                 toolsPopup.classList.remove('open');
             }
             if (!infoPopup.contains(event.target) && !infoButton.contains(event.target) && infoPopup.classList.contains('open')) {
+                console.log('Clicked outside, closing info popup');
                 infoPopup.classList.remove('open');
             }
         });
@@ -741,6 +803,7 @@
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 const sectionId = link.getAttribute('href').substring(1);
+                console.log(`Navigating to info section: ${sectionId}`);
                 sections.forEach(section => {
                     section.style.display = section.id === sectionId ? 'block' : 'none';
                 });
@@ -754,33 +817,33 @@
         });
 
         // Tooltip Accessibility and Debugging
-        [toolsButton, infoButton].forEach(button => {
+        [toolsButton, infoButton, exploreToolsBtn].forEach(button => {
             button.addEventListener('focus', () => {
                 const tooltip = button.querySelector('.tooltip');
                 if (tooltip) {
                     tooltip.style.opacity = '1';
-                    console.log(`Focus on ${button.id}: Tooltip should be visible`);
+                    console.log(`Focus on ${button.id}: Tooltip visible`);
                 }
             });
             button.addEventListener('blur', () => {
                 const tooltip = button.querySelector('.tooltip');
                 if (tooltip) {
                     tooltip.style.opacity = '0';
-                    console.log(`Blur on ${button.id}: Tooltip should be hidden`);
+                    console.log(`Blur on ${button.id}: Tooltip hidden`);
                 }
             });
             button.addEventListener('mouseover', () => {
                 const tooltip = button.querySelector('.tooltip');
                 if (tooltip) {
                     tooltip.style.opacity = '1';
-                    console.log(`Hover on ${button.id}: Tooltip should be visible`);
+                    console.log(`Hover on ${button.id}: Tooltip visible`);
                 }
             });
             button.addEventListener('mouseout', () => {
                 const tooltip = button.querySelector('.tooltip');
                 if (tooltip) {
                     tooltip.style.opacity = '0';
-                    console.log(`Mouseout on ${button.id}: Tooltip should be hidden`);
+                    console.log(`Mouseout on ${button.id}: Tooltip hidden`);
                 }
             });
         });

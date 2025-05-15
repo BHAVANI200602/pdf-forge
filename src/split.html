@@ -145,7 +145,7 @@
         <ul>
             <li>Upload a PDF by dragging it into the drag-and-drop area or clicking to select a file.</li>
             <li>Wait for the PDF to load; the total page count will be displayed below the file name.</li>
-            <li>Enter page ranges in the input field (e.g., "1-3, 5" for pages 1 to 3 and page 5).</li>
+            <li>Enter page ranges in the input field (e.g., "1-3, 5" for pages 1 to 3 and page 5), or enter a single number (e.g., "5") to split into chunks of that size.</li>
             <li>Click "Split PDF" to generate separate PDFs for each range.</li>
             <li>Download the split PDFs using the provided download buttons, or download all as a ZIP file if multiple PDFs are created.</li>
             <li>Use the "Reset" button to clear the current PDF and start over.</li>
@@ -214,15 +214,13 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdfDoc = await window.PDFLib.PDFDocument.load(arrayBuffer, { 
                     ignoreEncryption: false,
-                    parseSpeed: 'fast'
+                    parseSpeed: 1
                 });
                 totalPages = pdfDoc.getPageCount();
                 if (totalPages === 0) throw new Error('PDF has no pages.');
                 updateFileList();
                 pageCountDisplay.textContent = `Total pages: ${totalPages}`;
                 progressMessage.textContent = 'PDF loaded. Enter page ranges to split.';
-                // Clear memory
-                pdfDoc.removePageReference();
             } catch (error) {
                 alert(`Failed to load PDF: ${error.message || 'Unknown error'}.`);
                 progressMessage.textContent = '';
@@ -249,25 +247,49 @@
                 progressMessage.textContent = 'Page range cannot be empty.';
                 return null;
             }
-            const ranges = [];
+
             const parts = input.split(',').map(part => part.trim()).filter(part => part);
-            if (parts.length === 0 || parts.length > 100) {
-                progressMessage.textContent = parts.length === 0 ? 'No valid page ranges provided.' : 'Too many ranges (max 100).';
+            if (parts.length === 0) {
+                progressMessage.textContent = 'No valid page ranges provided.';
+                return null;
+            }
+            if (parts.length > 100) {
+                progressMessage.textContent = 'Too many ranges (max 100).';
                 return null;
             }
 
+            if (parts.length === 1 && /^\d+$/.test(parts[0])) {
+                const chunkSize = parseInt(parts[0], 10);
+                if (chunkSize < 1 || chunkSize > maxPages) {
+                    progressMessage.textContent = `Chunk size "${chunkSize}" is invalid (must be between 1 and ${maxPages}).`;
+                    return null;
+                }
+
+                const ranges = [];
+                for (let start = 1; start <= maxPages; start += chunkSize) {
+                    const end = Math.min(start + chunkSize - 1, maxPages);
+                    ranges.push({ start: start - 1, end: end - 1 });
+                }
+                return ranges;
+            }
+
+            const ranges = [];
             const rangeRegex = /^\s*(\d+)\s*(?:-\s*(\d+))?\s*$/;
             for (const part of parts) {
                 if (!rangeRegex.test(part)) {
-                    progressMessage.textContent = `Invalid range format: "${part}".`;
+                    progressMessage.textContent = `Invalid range format: "${part}". Use numbers or ranges (e.g., "1-3").`;
                     return null;
                 }
                 const [, startStr, endStr] = part.match(rangeRegex);
                 const start = parseInt(startStr, 10);
                 const end = endStr ? parseInt(endStr, 10) : start;
 
-                if (isNaN(start) || isNaN(end) || start < 1 || end < start || start > maxPages || end > maxPages) {
-                    progressMessage.textContent = `Invalid range: "${part}".`;
+                if (isNaN(start) || isNaN(end)) {
+                    progressMessage.textContent = `Invalid numbers in range: "${part}".`;
+                    return null;
+                }
+                if (start < 1 || end < start || start > maxPages || end > maxPages) {
+                    progressMessage.textContent = `Range "${part}" is out of bounds or invalid (1-${maxPages}).`;
                     return null;
                 }
                 ranges.push({ start: start - 1, end: end - 1 });
@@ -290,12 +312,19 @@
             }
             const ranges = parsePageRanges(pageRangeInput.value, totalPages);
             if (ranges) {
-                progressMessage.textContent = `Valid ranges: ${ranges.map(r => `${r.start + 1}-${r.end + 1}`).join(', ')}`;
+                const parts = pageRangeInput.value.split(',').map(part => part.trim()).filter(part => part);
+                if (parts.length === 1 && /^\d+$/.test(parts[0])) {
+                    progressMessage.textContent = `Splitting into chunks of ${parts[0]} pages: ${ranges.map(r => `${r.start + 1}-${r.end + 1}`).join(', ')}`;
+                } else {
+                    progressMessage.textContent = `Valid ranges: ${ranges.map(r => `${r.start + 1}-${r.end + 1}`).join(', ')}`;
+                }
             }
         });
 
         function cleanupUrls() {
-            pdfFiles.forEach(({ url }) => URL.revokeObjectURL(url));
+            pdfFiles.forEach(({ url }) => {
+                if (url) URL.revokeObjectURL(url);
+            });
             pdfFiles = [];
         }
 
@@ -317,12 +346,11 @@
 
             try {
                 const pdfBytes = await selectedFile.arrayBuffer();
-                const sourcePdf = await window.PDFLib.PDFDocument.load(pdfBytes, { 
+                const sourcePdf = await window.PDFLib.PDFDocument.load(pdfBytes, {
                     ignoreEncryption: false,
-                    parseSpeed: 'fast'
+                    parseSpeed: 1
                 });
 
-                // Process ranges in smaller batches for large files
                 const batchSize = 10;
                 for (let i = 0; i < ranges.length; i += batchSize) {
                     const batchRanges = ranges.slice(i, i + batchSize);
@@ -353,6 +381,7 @@
 
                 progressMessage.textContent = `Split complete! ${pdfFiles.length} file(s) ready to download.`;
             } catch (error) {
+                console.error('Splitting error:', error);
                 alert(`Failed to split PDF: ${error.message || 'Unknown error'}.`);
                 progressMessage.textContent = 'Splitting failed. Please try again.';
                 downloadContainer.innerHTML = '';
@@ -373,14 +402,29 @@
 
                     const newPdfDoc = await window.PDFLib.PDFDocument.create();
                     const pageIndices = Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
-                    const copiedPages = await newPdfDoc.copyPages(sourcePdf, pageIndices);
-                    copiedPages.forEach(page => newPdfDoc.addPage(page));
+                    console.log(`Range ${start + 1}-${end + 1}: Page indices to copy: ${pageIndices}`);
 
-                    const newPdfBytes = await newPdfDoc.save({ 
+                    const copiedPages = await newPdfDoc.copyPages(sourcePdf, pageIndices);
+                    console.log(`Range ${start + 1}-${end + 1}: Number of copied pages: ${copiedPages.length}`);
+
+                    copiedPages.forEach((page, idx) => {
+                        newPdfDoc.addPage(page);
+                        console.log(`Range ${start + 1}-${end + 1}: Added page ${idx + 1} of ${copiedPages.length}`);
+                    });
+
+                    const pageCount = newPdfDoc.getPageCount();
+                    console.log(`Range ${start + 1}-${end + 1}: Final page count in new PDF: ${pageCount}`);
+                    if (pageCount !== (end - start + 1)) {
+                        throw new Error(`Expected ${end - start + 1} pages, but got ${pageCount}`);
+                    }
+
+                    const newPdfBytes = await newPdfDoc.save({
                         updateFieldAppearances: false,
                         useObjectStreams: true
                     });
-                    if (!newPdfBytes || newPdfBytes.length === 0) throw new Error('Empty PDF generated.');
+                    if (!newPdfBytes || newPdfBytes.length === 0) {
+                        throw new Error('Empty PDF generated.');
+                    }
 
                     const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
                     const url = URL.createObjectURL(blob);
@@ -394,14 +438,12 @@
                     downloadBtn.textContent = `Download Pages ${start + 1}-${end + 1}`;
                     downloadBtn.className = 'download-btn';
                     downloadContainer.appendChild(downloadBtn);
-
-                    // Clear memory
-                    newPdfDoc.removePageReference();
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                } catch (e) {
+                } catch (error) {
+                    console.error(`Error processing range ${start + 1}-${end + 1}:`, error);
                     progressMessage.textContent = `Failed to process range ${start + 1}-${end + 1}. Skipping...`;
                     continue;
                 }
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
         }
 
